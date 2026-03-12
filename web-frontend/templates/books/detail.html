@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'book_list' %}">Sách</a></li>
+            <li class="breadcrumb-item active">{{ book.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Book image -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                {% if book.image_url %}
+                <img src="{{ book.image_url }}" class="card-img-top" alt="{{ book.title }}" style="max-height:400px;object-fit:cover">
+                {% else %}
+                <div class="card-img-top book-cover" style="height:350px"><i class="bi bi-journal-richtext"></i></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Book info -->
+        <div class="col-md-5 mb-4">
+            <h3 class="fw-bold">{{ book.title }}</h3>
+            <p class="text-muted"><i class="bi bi-person"></i> {{ book.author }}</p>
+
+            {% if avg_rating %}
+            <div class="mb-2">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= avg_rating.average_rating %}
+                    <i class="bi bi-star-fill rating-star"></i>
+                    {% else %}
+                    <i class="bi bi-star rating-star"></i>
+                    {% endif %}
+                {% endfor %}
+                <span class="text-muted ms-1">({{ avg_rating.total_reviews }} đánh giá)</span>
+            </div>
+            {% endif %}
+
+            <table class="table table-sm mt-3">
+                <tr><th style="width:120px">ISBN</th><td>{{ book.isbn }}</td></tr>
+                <tr><th>Danh mục</th><td>{{ book.category_id|default:"—" }}</td></tr>
+                <tr>
+                    <th>Tồn kho</th>
+                    <td>
+                        {% if book.stock > 0 %}
+                        <span class="text-success fw-bold">Còn {{ book.stock }} cuốn</span>
+                        {% else %}
+                        <span class="text-danger fw-bold">Hết hàng</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+
+            {% if book.description %}
+            <h6 class="mt-3">Mô tả</h6>
+            <p>{{ book.description }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Purchase box -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <p class="price-tag fs-3">{{ book.price }}₫</p>
+                    {% if book.stock > 0 %}
+                    <form method="post" action="{% url 'cart_add' book.id %}">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">SL</span>
+                            <input type="number" name="quantity" value="1" min="1" max="{{ book.stock }}" class="form-control">
+                        </div>
+                        <button class="btn btn-accent w-100 mb-2">
+                            <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-secondary w-100" disabled>Hết hàng</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Đánh giá ({{ reviews|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if request.session.customer_id %}
+                    <form method="post" action="{% url 'add_review' book.id %}" class="mb-4 p-3 bg-light rounded">
+                        {% csrf_token %}
+                        <h6>Viết đánh giá</h6>
+                        <div class="mb-2">
+                            <label class="form-label">Đánh giá sao</label>
+                            <select name="rating" class="form-select" style="width:auto">
+                                <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                <option value="4">⭐⭐⭐⭐ (4)</option>
+                                <option value="3">⭐⭐⭐ (3)</option>
+                                <option value="2">⭐⭐ (2)</option>
+                                <option value="1">⭐ (1)</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Nhận xét của bạn..."></textarea>
+                        </div>
+                        <button class="btn btn-sm btn-accent"><i class="bi bi-send"></i> Gửi đánh giá</button>
+                    </form>
+                    {% endif %}
+
+                    {% for review in reviews %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                    <i class="bi bi-star-fill rating-star"></i>
+                                    {% else %}
+                                    <i class="bi bi-star rating-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <small class="text-muted ms-2">Khách hàng #{{ review.customer_id }}</small>
+                            </div>
+                            <small class="text-muted">{{ review.created_at|truncatechars:10 }}</small>
+                        </div>
+                        <p class="mt-2 mb-0">{{ review.comment }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3">Chưa có đánh giá nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

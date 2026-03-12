@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Đơn hàng #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'order_list' %}">Đơn hàng</a></li>
+            <li class="breadcrumb-item active">Đơn #{{ order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Order info -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0">Đơn hàng #{{ order.id }}</h5>
+                    {% if order.status == "confirmed" or order.status == "completed" %}
+                    <span class="badge bg-success fs-6">{{ order.status }}</span>
+                    {% elif order.status == "cancelled" %}
+                    <span class="badge bg-danger fs-6">{{ order.status }}</span>
+                    {% else %}
+                    <span class="badge bg-info fs-6">{{ order.status }}</span>
+                    {% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Sách</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+                        <tbody>
+                            {% for item in order.items %}
+                            <tr>
+                                <td>
+                                    {% if item.book %}
+                                    <a href="{% url 'book_detail' item.book_id %}">{{ item.book.title }}</a>
+                                    {% else %}
+                                    Sách #{{ item.book_id }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.price }}₫</td>
+                                <td class="fw-bold">{{ item.quantity|floatformat:0 }}₫</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-light">
+                                <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
+                                <td class="price-tag fs-5">{{ order.total_amount }}₫</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Saga logs -->
+            {% if order.saga_logs %}
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-diagram-3"></i> Lịch sử xử lý (Saga)</h6></div>
+                <div class="card-body">
+                    {% for log in order.saga_logs %}
+                    <div class="d-flex align-items-center mb-2">
+                        {% if log.status == "success" %}
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        {% elif log.status == "failed" %}
+                        <i class="bi bi-x-circle-fill text-danger me-2"></i>
+                        {% else %}
+                        <i class="bi bi-arrow-counterclockwise text-warning me-2"></i>
+                        {% endif %}
+                        <span><strong>{{ log.step }}</strong> — {{ log.status }}</span>
+                        {% if log.details %}
+                        <small class="text-muted ms-2">{{ log.details }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar: shipping & payment -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-truck"></i> Vận chuyển</h6></div>
+                <div class="card-body">
+                    {% if shipment %}
+                    <p><strong>Mã vận đơn:</strong> {{ shipment.tracking_number }}</p>
+                    <p><strong>Phương thức:</strong> {{ shipment.method }}</p>
+                    <p><strong>Trạng thái:</strong>
+                        <span class="badge bg-info">{{ shipment.status }}</span>
+                    </p>
+                    <p><strong>Địa chỉ:</strong> {{ shipment.address }}</p>
+                    {% if shipment.estimated_delivery %}
+                    <p><strong>Dự kiến:</strong> {{ shipment.estimated_delivery }}</p>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-muted">Chưa có thông tin vận chuyển.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-wallet2"></i> Thanh toán</h6></div>
+                <div class="card-body">
+                    {% if payment %}
+                    <p><strong>Mã GD:</strong> {{ payment.transaction_id }}</p>
+                    <p><strong>Phương thức:</strong> {{ payment.method }}</p>
+                    <p><strong>Số tiền:</strong> <span class="fw-bold">{{ payment.amount }}₫</span></p>
+                    <p><strong>Trạng thái:</strong>
+                        <span class="badge bg-info">{{ payment.status }}</span>
+                    </p>
+                    {% else %}
+                    <p class="text-muted">Chưa có thông tin thanh toán.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <p><strong>Ngày đặt:</strong> {{ order.created_at|truncatechars:10 }}</p>
+                    <p><strong>Địa chỉ:</strong> {{ order.shipping_address }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
