@@ -1,0 +1,508 @@
+version: '3.8'
+
+services:
+  # ======== PostgreSQL Databases ========
+  gateway-db:
+    image: postgres:16-alpine
+    container_name: gateway-db
+    environment:
+      POSTGRES_DB: gateway_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - gateway-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  staff-db:
+    image: postgres:16-alpine
+    container_name: staff-db
+    environment:
+      POSTGRES_DB: staff_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - staff-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  manager-db:
+    image: postgres:16-alpine
+    container_name: manager-db
+    environment:
+      POSTGRES_DB: manager_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - manager-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  customer-db:
+    image: postgres:16-alpine
+    container_name: customer-db
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - customer-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  catalog-db:
+    image: postgres:16-alpine
+    container_name: catalog-db
+    environment:
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - catalog-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  book-db:
+    image: postgres:16-alpine
+    container_name: book-db
+    environment:
+      POSTGRES_DB: book_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - book-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  cart-db:
+    image: postgres:16-alpine
+    container_name: cart-db
+    environment:
+      POSTGRES_DB: cart_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - cart-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  order-db:
+    image: postgres:16-alpine
+    container_name: order-db
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - order-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  ship-db:
+    image: postgres:16-alpine
+    container_name: ship-db
+    environment:
+      POSTGRES_DB: ship_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ship-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  pay-db:
+    image: postgres:16-alpine
+    container_name: pay-db
+    environment:
+      POSTGRES_DB: pay_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pay-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  comment-rate-db:
+    image: postgres:16-alpine
+    container_name: comment-rate-db
+    environment:
+      POSTGRES_DB: comment_rate_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - comment-rate-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  recommender-db:
+    image: postgres:16-alpine
+    container_name: recommender-db
+    environment:
+      POSTGRES_DB: recommender_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - recommender-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  # ======== Application Services ========
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      DB_NAME: gateway_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: gateway-db
+      DB_PORT: "5432"
+    depends_on:
+      gateway-db:
+        condition: service_healthy
+      staff-service:
+        condition: service_started
+      manager-service:
+        condition: service_started
+      customer-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      book-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      ship-service:
+        condition: service_started
+      pay-service:
+        condition: service_started
+      comment-rate-service:
+        condition: service_started
+      recommender-ai-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  staff-service:
+    build: ./staff-service
+    container_name: staff-service
+    ports:
+      - "8001:8001"
+    environment:
+      DB_NAME: staff_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: staff-db
+      DB_PORT: "5432"
+    depends_on:
+      staff-db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+  manager-service:
+    build: ./manager-service
+    container_name: manager-service
+    ports:
+      - "8002:8002"
+    environment:
+      DB_NAME: manager_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: manager-db
+      DB_PORT: "5432"
+    depends_on:
+      manager-db:
+        condition: service_healthy
+      staff-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  customer-service:
+    build: ./customer-service
+    container_name: customer-service
+    ports:
+      - "8003:8003"
+    environment:
+      DB_NAME: customer_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: customer-db
+      DB_PORT: "5432"
+    depends_on:
+      customer-db:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  catalog-service:
+    build: ./catalog-service
+    container_name: catalog-service
+    ports:
+      - "8004:8004"
+    environment:
+      DB_NAME: catalog_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: catalog-db
+      DB_PORT: "5432"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      book-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  book-service:
+    build: ./book-service
+    container_name: book-service
+    ports:
+      - "8005:8005"
+    environment:
+      DB_NAME: book_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: book-db
+      DB_PORT: "5432"
+    depends_on:
+      book-db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service
+    ports:
+      - "8006:8006"
+    environment:
+      DB_NAME: cart_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: cart-db
+      DB_PORT: "5432"
+    depends_on:
+      cart-db:
+        condition: service_healthy
+      book-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8007:8007"
+    environment:
+      DB_NAME: order_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: order-db
+      DB_PORT: "5432"
+    depends_on:
+      order-db:
+        condition: service_healthy
+      pay-service:
+        condition: service_started
+      ship-service:
+        condition: service_started
+      book-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  ship-service:
+    build: ./ship-service
+    container_name: ship-service
+    ports:
+      - "8008:8008"
+    environment:
+      DB_NAME: ship_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: ship-db
+      DB_PORT: "5432"
+    depends_on:
+      ship-db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+  pay-service:
+    build: ./pay-service
+    container_name: pay-service
+    ports:
+      - "8009:8009"
+    environment:
+      DB_NAME: pay_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: pay-db
+      DB_PORT: "5432"
+    depends_on:
+      pay-db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+  comment-rate-service:
+    build: ./comment-rate-service
+    container_name: comment-rate-service
+    ports:
+      - "8010:8010"
+    environment:
+      DB_NAME: comment_rate_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: comment-rate-db
+      DB_PORT: "5432"
+    depends_on:
+      comment-rate-db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+  recommender-ai-service:
+    build: ./recommender-ai-service
+    container_name: recommender-ai-service
+    ports:
+      - "8011:8011"
+    environment:
+      DB_NAME: recommender_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: recommender-db
+      DB_PORT: "5432"
+    depends_on:
+      recommender-db:
+        condition: service_healthy
+      book-service:
+        condition: service_started
+      comment-rate-service:
+        condition: service_started
+    networks:
+      - bookstore-network
+
+  # ======== Web Frontend ========
+  web-frontend:
+    build: ./web-frontend
+    container_name: web-frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - SECRET_KEY=web-frontend-secret-key
+      - DEBUG=True
+      - STAFF_SERVICE_URL=http://staff-service:8001
+      - MANAGER_SERVICE_URL=http://manager-service:8002
+      - CUSTOMER_SERVICE_URL=http://customer-service:8003
+      - CATALOG_SERVICE_URL=http://catalog-service:8004
+      - BOOK_SERVICE_URL=http://book-service:8005
+      - CART_SERVICE_URL=http://cart-service:8006
+      - ORDER_SERVICE_URL=http://order-service:8007
+      - SHIP_SERVICE_URL=http://ship-service:8008
+      - PAY_SERVICE_URL=http://pay-service:8009
+      - COMMENT_SERVICE_URL=http://comment-rate-service:8010
+      - RECOMMENDER_SERVICE_URL=http://recommender-ai-service:8011
+      - API_GATEWAY_URL=http://api-gateway:8000
+    depends_on:
+      - api-gateway
+      - staff-service
+      - book-service
+      - catalog-service
+      - customer-service
+      - cart-service
+      - order-service
+      - ship-service
+      - pay-service
+      - comment-rate-service
+      - recommender-ai-service
+    networks:
+      - bookstore-network
+
+networks:
+  bookstore-network:
+    driver: bridge
+
+volumes:
+  gateway-data:
+  staff-data:
+  manager-data:
+  customer-data:
+  catalog-data:
+  book-data:
+  cart-data:
+  order-data:
+  ship-data:
+  pay-data:
+  comment-rate-data:
+  recommender-data:
